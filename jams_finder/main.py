@@ -1,10 +1,12 @@
+import gc
 import re
 import sys
 from concurrent.futures.thread import ThreadPoolExecutor
+from threading import Thread
 
 import requests
 
-from jams_finder.config import global_ip_q, login_path, port, header, global_file_lock, data_file
+from config import global_ip_q, login_path, port, header, global_file_lock, data_file
 
 
 def print_safe(msg):
@@ -25,8 +27,10 @@ def put_ip():
 
 
 def spider():
+    cnt = 0
     while True:
         if not global_ip_q.empty():
+            cnt += 1
             ip = global_ip_q.get()
             to_login = login_path("http://" + ip + ":" + port)
             try:
@@ -39,6 +43,8 @@ def spider():
                 print_safe(f"请求地址无效 {ip} {port}")
             except Exception:
                 print_safe("出现未知异常")
+        if cnt % 10 == 0:
+            gc.collect()
 
 
 def write_line(msg: str, file=data_file):
@@ -50,10 +56,9 @@ def write_line(msg: str, file=data_file):
 
 
 def main():
-    pool = ThreadPoolExecutor(max_workers=100)
-    pool.submit(put_ip)
-    while True:
-        pool.submit(spider)
+    Thread(target=put_ip).start()
+    for i in range(0, 10):
+        Thread(target=spider).start()
 
 
 if __name__ == '__main__':

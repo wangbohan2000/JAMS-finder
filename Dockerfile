@@ -1,9 +1,8 @@
 FROM alpine
 
+COPY jams_finder /jams_finder
+COPY requirements.txt /jams_finder
 WORKDIR /jams_finder
-
-COPY jams_finder .
-COPY requirements.txt .
 
 RUN ls / &&\
     sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories &&\
